@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
+import os
 from pathlib import Path
 
 import uvicorn
@@ -10,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import Settings, load_env_file
 from .engine import BotEngine
+from .market_making_dashboard import MarketMakingDashboard
 from .storage import Storage
 from .venues.arcus import ArcusVenue
 from .venues.lighter import LighterVenue
@@ -30,6 +33,13 @@ else:
     lighter_venue = LighterVenue(settings)
 
 engine = BotEngine(settings, arcus, lighter_venue, storage)
+market_making_database = Path(
+    os.getenv(
+        "MARKET_MAKING_LIGHTER_DATABASE_PATH",
+        str(ROOT.parent / "marketMakingLighter" / "data" / "market_maker.sqlite3"),
+    )
+)
+market_making_dashboard = MarketMakingDashboard(market_making_database)
 
 
 @asynccontextmanager
@@ -57,6 +67,37 @@ async def state() -> dict[str, object]:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
+@app.get("/api/bots")
+async def bots() -> dict[str, object]:
+    try:
+        arcus_state: dict[str, object] = await engine.snapshot()
+    except Exception as exc:
+        arcus_state = {
+            "mode": settings.mode,
+            "phase": "UNAVAILABLE",
+            "accepting_cycles": False,
+            "last_error": str(exc),
+            "accounts": [],
+            "positions": [],
+            "net_delta": {},
+            "stats": {"cycles_completed": 0, "session_volume": 0, "session_pnl": 0},
+            "events": [],
+            "config": settings.public_dict(),
+        }
+    return {
+        "generated_at": datetime.now(UTC).isoformat(),
+        "bots": {
+            "arcus_lighter": arcus_state,
+            "market_making_lighter": market_making_dashboard.snapshot(),
+        },
+    }
+
+
+@app.get("/api/bots/market-making-lighter")
+async def market_making_state() -> dict[str, object]:
+    return market_making_dashboard.snapshot()
+
+
 @app.post("/api/start")
 async def start() -> dict[str, bool]:
     await engine.start()
@@ -80,4 +121,3 @@ def run() -> None:
 
 if __name__ == "__main__":
     run()
-

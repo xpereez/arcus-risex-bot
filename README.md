@@ -1,6 +1,13 @@
-# Arcus / Lighter delta-neutral bot
+# Bot Control Center / Arcus + Lighter
 
-Motor de ciclos que ejecuta primero una orden maker en Arcus y cubre en Lighter cada incremento confirmado de fill. El cierre repite la secuencia en sentido inverso. Incluye dashboard, persistencia SQLite y modo paper acelerado.
+Motor de ciclos que ejecuta primero una orden maker en Arcus y cubre en Lighter cada incremento confirmado de fill. El cierre repite la secuencia en sentido inverso. Incluye persistencia SQLite y un dashboard general para supervisar varios bots.
+
+El dashboard incorpora actualmente:
+
+- `Arcus + Lighter`: ejecución delta neutral, wallets, volúmenes, posiciones y ciclos.
+- `Market Making Lighter`: estado shadow, recorder, última quote teórica, fills simulados, markouts y continuidad del libro.
+
+El segundo bot se lee en modo read-only desde `../marketMakingLighter/data/market_maker.sqlite3`. La ubicación puede cambiarse con `MARKET_MAKING_LIGHTER_DATABASE_PATH`.
 
 ## Estado
 

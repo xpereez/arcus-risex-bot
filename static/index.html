@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light" />
-    <title>Arcus / Lighter Control</title>
+    <title>Bot Control Center</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -14,95 +14,120 @@
     <div class="shell">
       <aside class="sidebar">
         <div class="brand">
-          <span class="brand-mark">A/L</span>
-          <div>
-            <strong>Neutral Control</strong>
-            <small>Arcus + Lighter</small>
-          </div>
+          <span class="brand-mark">BC</span>
+          <div><strong>Bot Control</strong><small>Trading systems</small></div>
         </div>
         <nav aria-label="Navegación principal">
           <a href="#overview" class="nav-link active"><i data-lucide="layout-dashboard"></i><span>Overview</span></a>
-          <a href="#positions" class="nav-link"><i data-lucide="panels-top-left"></i><span>Posiciones</span></a>
-          <a href="#activity" class="nav-link"><i data-lucide="list-tree"></i><span>Actividad</span></a>
+          <button class="nav-link bot-nav" data-bot="arcus" type="button"><i data-lucide="route"></i><span>Arcus Neutral</span></button>
+          <button class="nav-link bot-nav" data-bot="market-making" type="button"><i data-lucide="chart-candlestick"></i><span>Market Making</span></button>
         </nav>
         <div class="sidebar-foot">
-          <span class="pulse-dot"></span>
-          <div><strong id="side-status">Conectando</strong><small id="side-mode">Paper</small></div>
+          <span id="fleet-dot" class="pulse-dot"></span>
+          <div><strong id="fleet-status">Conectando</strong><small id="fleet-detail">2 bots</small></div>
         </div>
       </aside>
 
       <main>
         <header class="topbar" id="overview">
-          <div>
-            <p class="eyebrow">Ejecución delta neutral</p>
-            <h1>Control de ciclos</h1>
-          </div>
-          <div class="top-actions">
-            <span id="mode-pill" class="mode-pill">PAPER</span>
-            <button id="pause-button" class="button secondary" type="button"><i data-lucide="pause"></i><span>Pausar</span></button>
-            <button id="start-button" class="button primary" type="button"><i data-lucide="play"></i><span>Iniciar</span></button>
+          <div><p class="eyebrow">Centro de operaciones</p><h1>Todos los bots</h1></div>
+          <div id="arcus-actions" class="top-actions">
+            <span id="mode-pill" class="mode-pill">--</span>
+            <button id="pause-button" class="button secondary" type="button"><i data-lucide="pause"></i><span>Pausar Arcus</span></button>
+            <button id="start-button" class="button primary" type="button"><i data-lucide="play"></i><span>Iniciar Arcus</span></button>
           </div>
         </header>
 
-        <section class="status-band">
-          <div class="status-main">
-            <div class="status-line"><span id="status-dot" class="status-dot"></span><span id="phase">Cargando</span></div>
-            <p id="cycle-description">Esperando estado del motor</p>
-          </div>
-          <div class="countdown-block">
-            <span>Siguiente acción</span>
-            <strong id="countdown">--:--</strong>
-          </div>
-          <div class="delta-block">
-            <span>Delta residual</span>
-            <strong id="net-delta">0.000000</strong>
-          </div>
+        <section class="fleet-grid" aria-label="Bots disponibles">
+          <button class="bot-card active" data-bot="arcus" type="button">
+            <span class="bot-card-icon arcus"><i data-lucide="route"></i></span>
+            <span class="bot-card-copy"><small>Delta neutral</small><strong>Arcus + Lighter</strong><em id="arcus-card-detail">Cargando estado</em></span>
+            <span class="bot-card-metrics"><span>Volumen sesión<strong id="arcus-card-volume">$0.00</strong></span><span>PnL<strong id="arcus-card-pnl">$0.00</strong></span></span>
+            <span id="arcus-card-status" class="bot-status">--</span>
+          </button>
+          <button class="bot-card" data-bot="market-making" type="button">
+            <span class="bot-card-icon market"><i data-lucide="chart-candlestick"></i></span>
+            <span class="bot-card-copy"><small>Grid adaptativo · Shadow</small><strong>Market Making Lighter</strong><em id="mm-card-detail">Cargando recorder</em></span>
+            <span class="bot-card-metrics"><span>Eventos<strong id="mm-card-events">0</strong></span><span>Volumen simulado<strong id="mm-card-volume">$0.00</strong></span></span>
+            <span id="mm-card-status" class="bot-status">--</span>
+          </button>
         </section>
 
-        <section class="metrics" aria-label="Métricas de sesión">
-          <article><span>Volumen sesión</span><strong id="volume">$0.00</strong><small>ambas patas</small></article>
-          <article><span>PnL sesión</span><strong id="session-pnl">$0.00</strong><small>realizado</small></article>
-          <article><span>Ciclos</span><strong id="cycles">0</strong><small>completados</small></article>
-          <article><span>Notional actual</span><strong id="notional">$0.00</strong><small id="current-market">sin posición</small></article>
-        </section>
+        <section id="arcus-bot-view" class="bot-view">
+          <div class="section-title"><div><p class="eyebrow">Bot seleccionado</p><h2>Arcus + Lighter Delta Neutral</h2></div><span class="safety-label live-capable">Ejecución por ciclos</span></div>
+          <section class="status-band">
+            <div class="status-main"><div class="status-line"><span id="status-dot" class="status-dot"></span><span id="phase">Cargando</span></div><p id="cycle-description">Esperando estado del motor</p></div>
+            <div class="countdown-block"><span>Siguiente acción</span><strong id="countdown">--:--</strong></div>
+            <div class="delta-block"><span>Delta residual</span><strong id="net-delta">0.000000</strong></div>
+          </section>
 
-        <section class="workspace-grid">
-          <div class="panel wallets-panel">
-            <div class="panel-head"><div><p class="eyebrow">Capital</p><h2>Wallets</h2></div><i data-lucide="wallet-cards"></i></div>
-            <div id="wallets" class="wallet-list"></div>
-          </div>
-          <div class="panel cycle-panel">
-            <div class="panel-head"><div><p class="eyebrow">Ciclo activo</p><h2 id="cycle-title">Sin operación</h2></div><span id="cycle-side" class="side-badge neutral">IDLE</span></div>
-            <div id="cycle-empty" class="empty-state">Esperando el siguiente ciclo</div>
-            <div id="cycle-details" class="cycle-details hidden">
-              <div><span>Size</span><strong id="cycle-size">0</strong></div>
-              <div><span>Abierto</span><strong id="cycle-opened">0</strong></div>
-              <div><span>Entrada Arcus</span><strong id="arcus-entry">-</strong></div>
-              <div><span>Entrada Lighter</span><strong id="lighter-entry">-</strong></div>
-              <div class="progress-row"><span>Progreso</span><div class="progress"><span id="cycle-progress"></span></div><strong id="cycle-percent">0%</strong></div>
+          <section class="metrics" aria-label="Métricas de sesión">
+            <article><span>Volumen sesión</span><strong id="volume">$0.00</strong><small>ambas patas</small></article>
+            <article><span>PnL sesión</span><strong id="session-pnl">$0.00</strong><small>realizado</small></article>
+            <article><span>Ciclos</span><strong id="cycles">0</strong><small>completados</small></article>
+            <article><span>Notional actual</span><strong id="notional">$0.00</strong><small id="current-market">sin posición</small></article>
+          </section>
+
+          <section class="workspace-grid">
+            <div class="panel wallets-panel"><div class="panel-head"><div><p class="eyebrow">Capital</p><h2>Wallets</h2></div><i data-lucide="wallet-cards"></i></div><div id="wallets" class="wallet-list"></div></div>
+            <div class="panel cycle-panel">
+              <div class="panel-head"><div><p class="eyebrow">Ciclo activo</p><h2 id="cycle-title">Sin operación</h2></div><span id="cycle-side" class="side-badge neutral">IDLE</span></div>
+              <div id="cycle-empty" class="empty-state">Esperando el siguiente ciclo</div>
+              <div id="cycle-details" class="cycle-details hidden">
+                <div><span>Size</span><strong id="cycle-size">0</strong></div><div><span>Abierto</span><strong id="cycle-opened">0</strong></div>
+                <div><span>Entrada Arcus</span><strong id="arcus-entry">-</strong></div><div><span>Entrada Lighter</span><strong id="lighter-entry">-</strong></div>
+                <div class="progress-row"><span>Progreso</span><div class="progress"><span id="cycle-progress"></span></div><strong id="cycle-percent">0%</strong></div>
+              </div>
             </div>
-          </div>
+          </section>
+
+          <section class="panel table-panel">
+            <div class="panel-head"><div><p class="eyebrow">Exposición</p><h2>Posiciones abiertas</h2></div><span id="position-count" class="count-badge">0</span></div>
+            <div class="table-wrap"><table><thead><tr><th>Protocolo</th><th>Mercado</th><th>Dirección</th><th>Size</th><th>Entrada</th><th>Mark</th><th>Liquidación</th><th>PnL</th></tr></thead><tbody id="positions-body"><tr><td colspan="8" class="empty-cell">No hay posiciones abiertas</td></tr></tbody></table></div>
+          </section>
+
+          <section class="activity-grid">
+            <div class="panel activity-panel"><div class="panel-head"><div><p class="eyebrow">Tiempo real</p><h2>Actividad Arcus</h2></div><i data-lucide="activity"></i></div><div id="events" class="event-list"></div></div>
+            <div class="panel config-panel"><div class="panel-head"><div><p class="eyebrow">Estrategia</p><h2>Parámetros</h2></div><i data-lucide="sliders-horizontal"></i></div><dl id="config"></dl></div>
+          </section>
         </section>
 
-        <section class="panel table-panel" id="positions">
-          <div class="panel-head"><div><p class="eyebrow">Exposición</p><h2>Posiciones abiertas</h2></div><span id="position-count" class="count-badge">0</span></div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Protocolo</th><th>Mercado</th><th>Dirección</th><th>Size</th><th>Entrada</th><th>Mark</th><th>Liquidación</th><th>PnL</th></tr></thead>
-              <tbody id="positions-body"><tr><td colspan="8" class="empty-cell">No hay posiciones abiertas</td></tr></tbody>
-            </table>
-          </div>
-        </section>
+        <section id="market-making-bot-view" class="bot-view hidden">
+          <div class="section-title"><div><p class="eyebrow">Bot seleccionado</p><h2>Market Making Lighter</h2></div><span class="safety-label shadow-only"><i data-lucide="shield-check"></i> Shadow only · sin órdenes</span></div>
+          <section class="status-band">
+            <div class="status-main"><div class="status-line"><span id="mm-status-dot" class="status-dot offline"></span><span id="mm-state">Cargando</span></div><p id="mm-description">Leyendo recorder del market maker</p></div>
+            <div class="countdown-block"><span>Último dato</span><strong id="mm-last-seen">--</strong></div>
+            <div class="delta-block"><span>Inventario simulado</span><strong id="mm-inventory">0 BTC</strong></div>
+          </section>
 
-        <section class="activity-grid" id="activity">
-          <div class="panel activity-panel">
-            <div class="panel-head"><div><p class="eyebrow">Tiempo real</p><h2>Actividad</h2></div><i data-lucide="activity"></i></div>
-            <div id="events" class="event-list"></div>
-          </div>
-          <div class="panel config-panel">
-            <div class="panel-head"><div><p class="eyebrow">Estrategia</p><h2>Parámetros</h2></div><i data-lucide="sliders-horizontal"></i></div>
-            <dl id="config"></dl>
-          </div>
+          <section class="metrics">
+            <article><span>Eventos de mercado</span><strong id="mm-events">0</strong><small>mensajes persistidos</small></article>
+            <article><span>Decisiones</span><strong id="mm-decisions">0</strong><small>ciclos de cotización</small></article>
+            <article><span>Fills simulados</span><strong id="mm-fills">0</strong><small>modelo conservador</small></article>
+            <article><span>Volumen simulado</span><strong id="mm-volume">$0.00</strong><small>fills hipotéticos</small></article>
+          </section>
+
+          <section class="mm-workspace">
+            <div class="panel quote-panel">
+              <div class="panel-head"><div><p class="eyebrow">BTC · Robinhood Lighter</p><h2>Última cotización teórica</h2></div><span id="mm-quote-state" class="count-badge">sin datos</span></div>
+              <div class="quote-ladder"><div class="quote-side bid"><span>Bid</span><strong id="mm-bid">-</strong><small id="mm-bid-size">- BTC</small></div><div class="quote-fair"><span>Fair price</span><strong id="mm-fair">-</strong><small id="mm-reservation">Reserva -</small></div><div class="quote-side ask"><span>Ask</span><strong id="mm-ask">-</strong><small id="mm-ask-size">- BTC</small></div></div>
+              <div class="signal-strip"><span>Basis<strong id="mm-basis">-</strong></span><span>Volatilidad<strong id="mm-volatility">-</strong></span><span>Toxicidad<strong id="mm-toxicity">-</strong></span></div>
+            </div>
+            <div class="panel health-panel">
+              <div class="panel-head"><div><p class="eyebrow">Control</p><h2>Salud y riesgo</h2></div><i data-lucide="shield-check"></i></div>
+              <dl class="health-list"><div><dt>Continuity gaps</dt><dd id="mm-gaps">0</dd></div><div><dt>Markouts</dt><dd id="mm-markouts">0</dd></div><div><dt>Equity simulada</dt><dd id="mm-equity">$0.00</dd></div><div><dt>Tiempo grabado</dt><dd id="mm-recorded-time">0 s</dd></div><div><dt>Último motivo</dt><dd id="mm-reason">—</dd></div></dl>
+            </div>
+          </section>
+
+          <section class="panel table-panel">
+            <div class="panel-head"><div><p class="eyebrow">Shadow execution</p><h2>Fills hipotéticos recientes</h2></div><span id="mm-fill-count" class="count-badge">0</span></div>
+            <div class="table-wrap"><table class="mm-table"><thead><tr><th>Hora</th><th>Lado</th><th>Precio</th><th>Size</th><th>Fair al fill</th><th>Notional</th></tr></thead><tbody id="mm-fills-body"><tr><td colspan="6" class="empty-cell">No hay fills simulados</td></tr></tbody></table></div>
+          </section>
+
+          <section class="activity-grid">
+            <div class="panel"><div class="panel-head"><div><p class="eyebrow">Evaluación</p><h2>Markouts por horizonte</h2></div><i data-lucide="scan-line"></i></div><div id="mm-markout-list" class="markout-list"><div class="empty-state">Sin muestras todavía</div></div></div>
+            <div class="panel config-panel"><div class="panel-head"><div><p class="eyebrow">Seguridad</p><h2>Modo de operación</h2></div><i data-lucide="lock-keyhole"></i></div><dl><div><dt>Modo</dt><dd>SHADOW</dd></div><div><dt>Envío de órdenes</dt><dd class="positive">DESACTIVADO</dd></div><div><dt>Símbolo</dt><dd>BTC</dd></div><div><dt>Persistencia</dt><dd>SQLite / WAL</dd></div></dl></div>
+          </section>
         </section>
       </main>
     </div>
