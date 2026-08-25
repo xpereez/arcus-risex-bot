@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "arcus-lighter-bot"
+version = "0.1.0"
+description = "Delta-neutral cycle executor for Arcus and Lighter"
+requires-python = ">=3.12"
+dependencies = [
+  "cryptography>=45,<47",
+  "fastapi>=0.116,<1",
+  "httpx>=0.28,<1",
+  "lighter-sdk==1.1.2",
+  "uvicorn[standard]>=0.35,<1",
+  "websockets>=15,<18",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8.4,<9", "pytest-asyncio>=1.1,<2"]
+
+[project.scripts]
+arcus-lighter-bot = "arcus_lighter_bot.main:run"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

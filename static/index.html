@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>Arcus / Lighter Control</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">A/L</span>
+          <div>
+            <strong>Neutral Control</strong>
+            <small>Arcus + Lighter</small>
+          </div>
+        </div>
+        <nav aria-label="Navegación principal">
+          <a href="#overview" class="nav-link active"><i data-lucide="layout-dashboard"></i><span>Overview</span></a>
+          <a href="#positions" class="nav-link"><i data-lucide="panels-top-left"></i><span>Posiciones</span></a>
+          <a href="#activity" class="nav-link"><i data-lucide="list-tree"></i><span>Actividad</span></a>
+        </nav>
+        <div class="sidebar-foot">
+          <span class="pulse-dot"></span>
+          <div><strong id="side-status">Conectando</strong><small id="side-mode">Paper</small></div>
+        </div>
+      </aside>
+
+      <main>
+        <header class="topbar" id="overview">
+          <div>
+            <p class="eyebrow">Ejecución delta neutral</p>
+            <h1>Control de ciclos</h1>
+          </div>
+          <div class="top-actions">
+            <span id="mode-pill" class="mode-pill">PAPER</span>
+            <button id="pause-button" class="button secondary" type="button"><i data-lucide="pause"></i><span>Pausar</span></button>
+            <button id="start-button" class="button primary" type="button"><i data-lucide="play"></i><span>Iniciar</span></button>
+          </div>
+        </header>
+
+        <section class="status-band">
+          <div class="status-main">
+            <div class="status-line"><span id="status-dot" class="status-dot"></span><span id="phase">Cargando</span></div>
+            <p id="cycle-description">Esperando estado del motor</p>
+          </div>
+          <div class="countdown-block">
+            <span>Siguiente acción</span>
+            <strong id="countdown">--:--</strong>
+          </div>
+          <div class="delta-block">
+            <span>Delta residual</span>
+            <strong id="net-delta">0.000000</strong>
+          </div>
+        </section>
+
+        <section class="metrics" aria-label="Métricas de sesión">
+          <article><span>Volumen sesión</span><strong id="volume">$0.00</strong><small>ambas patas</small></article>
+          <article><span>PnL sesión</span><strong id="session-pnl">$0.00</strong><small>realizado</small></article>
+          <article><span>Ciclos</span><strong id="cycles">0</strong><small>completados</small></article>
+          <article><span>Notional actual</span><strong id="notional">$0.00</strong><small id="current-market">sin posición</small></article>
+        </section>
+
+        <section class="workspace-grid">
+          <div class="panel wallets-panel">
+            <div class="panel-head"><div><p class="eyebrow">Capital</p><h2>Wallets</h2></div><i data-lucide="wallet-cards"></i></div>
+            <div id="wallets" class="wallet-list"></div>
+          </div>
+          <div class="panel cycle-panel">
+            <div class="panel-head"><div><p class="eyebrow">Ciclo activo</p><h2 id="cycle-title">Sin operación</h2></div><span id="cycle-side" class="side-badge neutral">IDLE</span></div>
+            <div id="cycle-empty" class="empty-state">Esperando el siguiente ciclo</div>
+            <div id="cycle-details" class="cycle-details hidden">
+              <div><span>Size</span><strong id="cycle-size">0</strong></div>
+              <div><span>Abierto</span><strong id="cycle-opened">0</strong></div>
+              <div><span>Entrada Arcus</span><strong id="arcus-entry">-</strong></div>
+              <div><span>Entrada Lighter</span><strong id="lighter-entry">-</strong></div>
+              <div class="progress-row"><span>Progreso</span><div class="progress"><span id="cycle-progress"></span></div><strong id="cycle-percent">0%</strong></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel table-panel" id="positions">
+          <div class="panel-head"><div><p class="eyebrow">Exposición</p><h2>Posiciones abiertas</h2></div><span id="position-count" class="count-badge">0</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Protocolo</th><th>Mercado</th><th>Dirección</th><th>Size</th><th>Entrada</th><th>Mark</th><th>Liquidación</th><th>PnL</th></tr></thead>
+              <tbody id="positions-body"><tr><td colspan="8" class="empty-cell">No hay posiciones abiertas</td></tr></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="activity-grid" id="activity">
+          <div class="panel activity-panel">
+            <div class="panel-head"><div><p class="eyebrow">Tiempo real</p><h2>Actividad</h2></div><i data-lucide="activity"></i></div>
+            <div id="events" class="event-list"></div>
+          </div>
+          <div class="panel config-panel">
+            <div class="panel-head"><div><p class="eyebrow">Estrategia</p><h2>Parámetros</h2></div><i data-lucide="sliders-horizontal"></i></div>
+            <dl id="config"></dl>
+          </div>
+        </section>
+      </main>
+    </div>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
