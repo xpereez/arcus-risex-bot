@@ -5,9 +5,9 @@ Motor de ciclos que ejecuta primero una orden maker en Arcus y cubre en Lighter 
 El dashboard incorpora actualmente:
 
 - `Arcus + Lighter`: ejecución delta neutral, wallets, volúmenes, posiciones y ciclos.
-- `Market Making Lighter`: estado shadow, recorder, última quote teórica, fills simulados, markouts y continuidad del libro.
+- `Market Making Lighter`: proceso shadow supervisado, recorder, última quote teórica, lifecycle de quotes, fills simulados, markouts y continuidad del libro.
 
-El segundo bot se lee en modo read-only desde `../marketMakingLighter/data/market_maker.sqlite3`. La ubicación puede cambiarse con `MARKET_MAKING_LIGHTER_DATABASE_PATH`.
+El dashboard arranca y detiene el segundo bot como proceso independiente, pero fuerza siempre `MM_MODE=shadow`: no existe una ruta de envío de órdenes. La base se lee desde `../marketMakingLighter/data/market_maker.sqlite3`; las ubicaciones pueden cambiarse con `MARKET_MAKING_LIGHTER_PROJECT_PATH` y `MARKET_MAKING_LIGHTER_DATABASE_PATH`.
 
 ## Estado
 
@@ -26,6 +26,29 @@ cp .env.example .env
 ```
 
 Dashboard: `http://127.0.0.1:8787`
+
+El control de arranque de cada motor es independiente:
+
+```dotenv
+# Arcus puede permanecer detenido aunque el dashboard arranque con el sistema.
+BOT_AUTO_START=false
+
+# Arranca únicamente el recorder/market maker shadow.
+MARKET_MAKING_AUTO_START=true
+```
+
+Los botones **Detener** e **Iniciar shadow** del panel de Market Making actúan sólo sobre ese proceso. Una parada cancela las quotes hipotéticas, persiste el estado `STOPPED` y elimina el PID; un arranque crea una sesión nueva y recupera los libros públicos.
+
+## Inicio automático en macOS
+
+`deploy/com.xpereez.bot-control.plist` es el LaunchAgent de esta instalación. Mantiene disponible el dashboard después de iniciar sesión y éste, a su vez, inicia el market maker shadow. La configuración local conserva `BOT_AUTO_START=false`, por lo que Arcus no empieza a operar por este mecanismo.
+
+```bash
+cp deploy/com.xpereez.bot-control.plist ~/Library/LaunchAgents/
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.xpereez.bot-control.plist
+```
+
+Los logs del servicio se escriben en `data/dashboard-launchd.log` y los del market maker en `../marketMakingLighter/data/market_maker.log`.
 
 En paper, `BOT_PAPER_TIME_SCALE=60` convierte los 20–40 minutos en 20–40 segundos y los 5–10 minutos en 5–10 segundos. Los valores mostrados en configuración siguen siendo los tiempos reales de estrategia.
 

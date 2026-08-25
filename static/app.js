@@ -6,7 +6,8 @@ let arcusState = null;
 let marketMakingState = null;
 let selectedBot = "arcus";
 let toastTimer = null;
-let refreshInFlight = false;
+let arcusRefreshInFlight = false;
+let marketMakingRefreshInFlight = false;
 
 function price(value) {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return "-";
@@ -159,6 +160,9 @@ function renderMarketMaking(data) {
   const records = data.records || {};
   const shadow = data.shadow || {};
   const quote = data.quote;
+  const runtime = data.runtime || {};
+  const quoteActions = data.quote_actions || {};
+  const process = data.process || {};
   const displayState = data.state || "UNAVAILABLE";
   const onlineClass = data.running ? "online" : (displayState === "HALTED" || displayState === "UNAVAILABLE" ? "error" : "idle");
 
@@ -175,6 +179,17 @@ function renderMarketMaking(data) {
   setText("mm-equity", money.format(shadow.equity_usd || 0));
   setText("mm-recorded-time", formatDuration(data.recorded_seconds || 0));
   setText("mm-reason", data.last_reason || "—");
+  setText("mm-open-quotes", integer.format(runtime.open_shadow_quotes || 0));
+  setText("mm-quote-actions", integer.format((quoteActions.NEW || 0) + (quoteActions.REPLACE || 0) + (quoteActions.CANCEL || 0)));
+  setText("mm-fill-rate", `${number.format(shadow.fill_rate_percent || 0)}%`);
+  setText("mm-spread-capture", `${number.format(shadow.spread_capture_bps || 0)} bps`);
+  setText("mm-rh-book", runtime.rh_book_valid ? "VÁLIDO" : "SINCRONIZANDO");
+  setText("mm-reference-book", runtime.reference_book_valid ? "VÁLIDO" : "SINCRONIZANDO");
+  $("mm-rh-book").className = runtime.rh_book_valid ? "positive" : "";
+  $("mm-reference-book").className = runtime.reference_book_valid ? "positive" : "";
+  setText("mm-sessions", integer.format(data.sessions || 0));
+  $("mm-start-button").disabled = Boolean(process.running);
+  $("mm-stop-button").disabled = !process.running;
   $("mm-status-dot").className = `status-dot ${onlineClass === "online" ? "" : "offline"}`;
   $("mm-status-dot").style.background = onlineClass === "online" ? "#59c9ad" : (onlineClass === "error" ? "var(--red)" : "#9aa4a1");
 
@@ -184,12 +199,13 @@ function renderMarketMaking(data) {
   setStatusPill("mm-card-status", displayState, onlineClass);
   renderQuote(quote);
   renderShadowFills(data.recent_fills || []);
+  renderQuoteActions(data.recent_quote_actions || []);
   renderMarkouts(data.markouts || []);
   renderFleet();
 }
 
 function marketMakingLabel(state) {
-  return { SHADOW: "Cotizando en shadow", STOPPED: "Bot detenido", SYNCING: "Sincronizando libros", PAUSED: "Pausado por riesgo", HALTED: "Detenido por seguridad", UNAVAILABLE: "No disponible", BOOT: "Inicializando" }[state] || state;
+  return { SHADOW: "Cotizando en shadow", STARTING: "Arrancando shadow", STOPPED: "Bot detenido", SYNCING: "Sincronizando libros", PAUSED: "Pausado por riesgo", HALTED: "Detenido por seguridad", UNAVAILABLE: "No disponible", BOOT: "Inicializando" }[state] || state;
 }
 
 function renderQuote(quote) {
@@ -230,6 +246,19 @@ function renderMarkouts(markouts) {
     return;
   }
   $("mm-markout-list").innerHTML = markouts.map((item) => `<div class="markout-row"><span>${item.horizon_ms} ms<small>${item.samples} muestras</small></span><strong class="${item.average_bps >= 0 ? "positive" : "negative"}">${number.format(item.average_bps)} bps</strong><em>${money.format(item.total_usd)}</em></div>`).join("");
+}
+
+function renderQuoteActions(actions) {
+  if (!actions.length) {
+    $("mm-quote-action-list").innerHTML = '<div class="empty-state">Sin acciones todavía</div>';
+    return;
+  }
+  $("mm-quote-action-list").innerHTML = actions.map((action) => `<div class="quote-action-row">
+    <time>${new Date(action.timestamp_ms).toLocaleTimeString("es-ES", {hour:"2-digit", minute:"2-digit", second:"2-digit"})}</time>
+    <span class="action-${String(action.action).toLowerCase()}">${escapeHtml(action.action)}</span>
+    <span>${escapeHtml(action.side)} · ${price(action.price)} · ${number.format(action.size)} BTC</span>
+    <em>cola ${number.format(action.queue_ahead)} · ${escapeHtml(action.reason || "—")}</em>
+  </div>`).join("");
 }
 
 function setStatusPill(id, label, status) {
@@ -290,7 +319,18 @@ async function action(path, message) {
     const response = await fetch(path, { method: "POST" });
     if (!response.ok) throw new Error(await response.text());
     showToast(message);
-    await refresh();
+    await refreshArcus();
+  } catch (error) {
+    showToast(`Error: ${error.message}`);
+  }
+}
+
+async function marketMakingAction(path, message) {
+  try {
+    const response = await fetch(path, { method: "POST" });
+    if (!response.ok) throw new Error((await response.json()).detail || response.statusText);
+    renderMarketMaking(await response.json());
+    showToast(message);
   } catch (error) {
     showToast(`Error: ${error.message}`);
   }
@@ -303,32 +343,32 @@ function showToast(message) {
   toastTimer = setTimeout(() => $("toast").classList.remove("show"), 2600);
 }
 
-async function refresh() {
-  if (refreshInFlight) return;
-  refreshInFlight = true;
+async function refreshArcus() {
+  if (arcusRefreshInFlight) return;
+  arcusRefreshInFlight = true;
   try {
-    const response = await fetch("/api/bots", { cache: "no-store" });
-    if (response.ok) {
-      const payload = await response.json();
-      renderArcus(payload.bots.arcus_lighter);
-      renderMarketMaking(payload.bots.market_making_lighter);
-    } else if (response.status === 404) {
-      const legacy = await fetch("/api/state", { cache: "no-store" });
-      if (!legacy.ok) throw new Error(legacy.statusText);
-      renderArcus(await legacy.json());
-      renderMarketMaking({
-        available: false, running: false, state: "UNAVAILABLE",
-        last_reason: "Pendiente de reinicio seguro del dashboard",
-        records: {}, shadow: {}, recent_fills: [], markouts: []
-      });
-    } else {
-      throw new Error((await response.json()).detail || response.statusText);
-    }
+    const response = await fetch("/api/state", { cache: "no-store" });
+    if (!response.ok) throw new Error((await response.json()).detail || response.statusText);
+    renderArcus(await response.json());
   } catch (error) {
-    setText("fleet-status", "Desconectado");
     setText("cycle-description", error.message);
   } finally {
-    refreshInFlight = false;
+    arcusRefreshInFlight = false;
+  }
+  if (window.lucide) window.lucide.createIcons();
+}
+
+async function refreshMarketMaking() {
+  if (marketMakingRefreshInFlight) return;
+  marketMakingRefreshInFlight = true;
+  try {
+    const response = await fetch("/api/bots/market-making-lighter", { cache: "no-store" });
+    if (!response.ok) throw new Error((await response.json()).detail || response.statusText);
+    renderMarketMaking(await response.json());
+  } catch (error) {
+    setText("mm-description", error.message);
+  } finally {
+    marketMakingRefreshInFlight = false;
   }
   if (window.lucide) window.lucide.createIcons();
 }
@@ -336,7 +376,11 @@ async function refresh() {
 document.querySelectorAll("[data-bot]").forEach((element) => element.addEventListener("click", () => selectBot(element.dataset.bot)));
 $("start-button").addEventListener("click", () => action("/api/start", "Motor Arcus iniciado"));
 $("pause-button").addEventListener("click", () => action("/api/pause", "Pausa Arcus solicitada"));
-setInterval(refresh, 5000);
+$("mm-start-button").addEventListener("click", () => marketMakingAction("/api/bots/market-making-lighter/start", "Market maker shadow iniciado"));
+$("mm-stop-button").addEventListener("click", () => marketMakingAction("/api/bots/market-making-lighter/stop", "Market maker shadow detenido"));
+setInterval(refreshArcus, 10000);
+setInterval(refreshMarketMaking, 2000);
 setInterval(renderCountdown, 250);
-refresh();
+refreshArcus();
+refreshMarketMaking();
 if (window.lucide) window.lucide.createIcons();

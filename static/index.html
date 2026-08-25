@@ -93,7 +93,10 @@
         </section>
 
         <section id="market-making-bot-view" class="bot-view hidden">
-          <div class="section-title"><div><p class="eyebrow">Bot seleccionado</p><h2>Market Making Lighter</h2></div><span class="safety-label shadow-only"><i data-lucide="shield-check"></i> Shadow only · sin órdenes</span></div>
+          <div class="section-title">
+            <div><p class="eyebrow">Bot seleccionado</p><h2>Market Making Lighter</h2></div>
+            <div class="mm-controls"><span class="safety-label shadow-only"><i data-lucide="shield-check"></i> Shadow only · sin órdenes</span><button id="mm-stop-button" class="button secondary" type="button"><i data-lucide="square"></i><span>Detener</span></button><button id="mm-start-button" class="button market-primary" type="button"><i data-lucide="play"></i><span>Iniciar shadow</span></button></div>
+          </div>
           <section class="status-band">
             <div class="status-main"><div class="status-line"><span id="mm-status-dot" class="status-dot offline"></span><span id="mm-state">Cargando</span></div><p id="mm-description">Leyendo recorder del market maker</p></div>
             <div class="countdown-block"><span>Último dato</span><strong id="mm-last-seen">--</strong></div>
@@ -107,6 +110,13 @@
             <article><span>Volumen simulado</span><strong id="mm-volume">$0.00</strong><small>fills hipotéticos</small></article>
           </section>
 
+          <section class="metrics compact-metrics">
+            <article><span>Quotes abiertas</span><strong id="mm-open-quotes">0</strong><small>bid + ask hipotéticos</small></article>
+            <article><span>Lifecycle quotes</span><strong id="mm-quote-actions">0</strong><small>new + replace + cancel</small></article>
+            <article><span>Fill rate shadow</span><strong id="mm-fill-rate">0%</strong><small>fills / quotes publicadas</small></article>
+            <article><span>Spread capturado</span><strong id="mm-spread-capture">0 bps</strong><small>fair contra precio de fill</small></article>
+          </section>
+
           <section class="mm-workspace">
             <div class="panel quote-panel">
               <div class="panel-head"><div><p class="eyebrow">BTC · Robinhood Lighter</p><h2>Última cotización teórica</h2></div><span id="mm-quote-state" class="count-badge">sin datos</span></div>
@@ -115,7 +125,7 @@
             </div>
             <div class="panel health-panel">
               <div class="panel-head"><div><p class="eyebrow">Control</p><h2>Salud y riesgo</h2></div><i data-lucide="shield-check"></i></div>
-              <dl class="health-list"><div><dt>Continuity gaps</dt><dd id="mm-gaps">0</dd></div><div><dt>Markouts</dt><dd id="mm-markouts">0</dd></div><div><dt>Equity simulada</dt><dd id="mm-equity">$0.00</dd></div><div><dt>Tiempo grabado</dt><dd id="mm-recorded-time">0 s</dd></div><div><dt>Último motivo</dt><dd id="mm-reason">—</dd></div></dl>
+              <dl class="health-list"><div><dt>Libro Robinhood</dt><dd id="mm-rh-book">—</dd></div><div><dt>Libro referencia</dt><dd id="mm-reference-book">—</dd></div><div><dt>Continuity gaps</dt><dd id="mm-gaps">0</dd></div><div><dt>Sesiones</dt><dd id="mm-sessions">0</dd></div><div><dt>Markouts</dt><dd id="mm-markouts">0</dd></div><div><dt>Equity simulada</dt><dd id="mm-equity">$0.00</dd></div><div><dt>Tiempo grabado</dt><dd id="mm-recorded-time">0 s</dd></div><div><dt>Último motivo</dt><dd id="mm-reason">—</dd></div></dl>
             </div>
           </section>
 
@@ -124,9 +134,9 @@
             <div class="table-wrap"><table class="mm-table"><thead><tr><th>Hora</th><th>Lado</th><th>Precio</th><th>Size</th><th>Fair al fill</th><th>Notional</th></tr></thead><tbody id="mm-fills-body"><tr><td colspan="6" class="empty-cell">No hay fills simulados</td></tr></tbody></table></div>
           </section>
 
-          <section class="activity-grid">
+          <section class="activity-grid mm-telemetry-grid">
+            <div class="panel"><div class="panel-head"><div><p class="eyebrow">Quotes hipotéticas</p><h2>Lifecycle reciente</h2></div><i data-lucide="list-restart"></i></div><div id="mm-quote-action-list" class="markout-list"><div class="empty-state">Sin acciones todavía</div></div></div>
             <div class="panel"><div class="panel-head"><div><p class="eyebrow">Evaluación</p><h2>Markouts por horizonte</h2></div><i data-lucide="scan-line"></i></div><div id="mm-markout-list" class="markout-list"><div class="empty-state">Sin muestras todavía</div></div></div>
-            <div class="panel config-panel"><div class="panel-head"><div><p class="eyebrow">Seguridad</p><h2>Modo de operación</h2></div><i data-lucide="lock-keyhole"></i></div><dl><div><dt>Modo</dt><dd>SHADOW</dd></div><div><dt>Envío de órdenes</dt><dd class="positive">DESACTIVADO</dd></div><div><dt>Símbolo</dt><dd>BTC</dd></div><div><dt>Persistencia</dt><dd>SQLite / WAL</dd></div></dl></div>
           </section>
         </section>
       </main>
