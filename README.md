@@ -7,6 +7,8 @@ El dashboard incorpora actualmente:
 - `Arcus + Lighter`: ejecución delta neutral, wallets, volúmenes, posiciones y ciclos.
 - `Market Making Lighter`: proceso shadow supervisado, recorder, última quote teórica, lifecycle de quotes, fills simulados, markouts y continuidad del libro.
 
+La vista de market making incorpora análisis automático de 24/72 horas: actividad por hora, capture y markout a 5 segundos, volumen, churn de quotes, resultados segmentados por lado, volatilidad, basis y spread cotizado, además de alertas y recomendaciones basadas en la muestra. El cálculo se sirve por `/api/bots/market-making-lighter/analytics` y se refresca cada minuto sin bloquear la telemetría en tiempo real.
+
 El dashboard arranca y detiene el segundo bot como proceso independiente, pero fuerza siempre `MM_MODE=shadow`: no existe una ruta de envío de órdenes. La base se lee desde `../marketMakingLighter/data/market_maker.sqlite3`; las ubicaciones pueden cambiarse con `MARKET_MAKING_LIGHTER_PROJECT_PATH` y `MARKET_MAKING_LIGHTER_DATABASE_PATH`.
 
 ## Estado

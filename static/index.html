@@ -117,6 +117,27 @@
             <article><span>Spread capturado</span><strong id="mm-spread-capture">0 bps</strong><small>fair contra precio de fill</small></article>
           </section>
 
+          <section class="analytics-section">
+            <div class="section-title analytics-title">
+              <div><p class="eyebrow">Análisis automático</p><h2>Rendimiento shadow</h2><small id="mm-analytics-updated" class="analytics-updated">Calculando ventana histórica</small></div>
+              <div class="range-control" aria-label="Ventana de análisis"><button class="active" data-analytics-hours="24" type="button">24 h</button><button data-analytics-hours="72" type="button">72 h</button></div>
+            </div>
+            <section class="metrics analytics-metrics">
+              <article><span>Volumen ventana</span><strong id="mm-analysis-volume">0,00 US$</strong><small id="mm-analysis-fills">0 fills</small></article>
+              <article><span>Markout 5 s</span><strong id="mm-analysis-markout">—</strong><small>calidad después del fill</small></article>
+              <article><span>Acciones/min</span><strong id="mm-analysis-churn">0</strong><small>rotación lifecycle</small></article>
+              <article><span>Horas activas</span><strong id="mm-analysis-hours">0</strong><small>con mercado grabado</small></article>
+            </section>
+            <section class="analytics-charts">
+              <div class="panel chart-panel"><div class="panel-head"><div><p class="eyebrow">Actividad horaria</p><h2>Eventos y lifecycle</h2></div><div class="chart-legend"><span class="events">Eventos</span><span class="quotes">Quotes</span></div></div><div id="mm-flow-chart" class="chart-stage"><div class="empty-state">Esperando histórico</div></div></div>
+              <div class="panel chart-panel"><div class="panel-head"><div><p class="eyebrow">Calidad de ejecución</p><h2>Capture y markout 5 s</h2></div><div class="chart-legend"><span class="capture">Capture</span><span class="markout">Markout</span></div></div><div id="mm-quality-chart" class="chart-stage"><div class="empty-state">Esperando fills</div></div></div>
+            </section>
+            <section class="analytics-detail-grid">
+              <div class="panel"><div class="panel-head"><div><p class="eyebrow">Segmentación</p><h2>Resultados por régimen</h2></div><i data-lucide="split"></i></div><div id="mm-regime-grid" class="regime-grid"><div class="empty-state">Esperando muestra</div></div></div>
+              <div class="panel"><div class="panel-head"><div><p class="eyebrow">Diagnóstico</p><h2>Alertas y próximos pasos</h2></div><i data-lucide="sparkles"></i></div><div id="mm-analysis-alerts" class="analysis-alerts"><div class="empty-state">Calculando diagnóstico</div></div><div id="mm-recommendations" class="recommendations"></div></div>
+            </section>
+          </section>
+
           <section class="mm-workspace">
             <div class="panel quote-panel">
               <div class="panel-head"><div><p class="eyebrow">BTC · Robinhood Lighter</p><h2>Última cotización teórica</h2></div><span id="mm-quote-state" class="count-badge">sin datos</span></div>

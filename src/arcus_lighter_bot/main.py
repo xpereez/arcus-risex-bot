@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import Settings, load_env_file
 from .engine import BotEngine
+from .market_making_analytics import MarketMakingAnalytics
 from .market_making_dashboard import MarketMakingDashboard
 from .market_making_process import MarketMakingProcessManager
 from .storage import Storage
@@ -41,6 +42,7 @@ market_making_database = Path(
     )
 )
 market_making_dashboard = MarketMakingDashboard(market_making_database)
+market_making_analytics = MarketMakingAnalytics(market_making_database)
 market_making_project = Path(
     os.getenv("MARKET_MAKING_LIGHTER_PROJECT_PATH", str(ROOT.parent / "marketMakingLighter"))
 )
@@ -126,6 +128,11 @@ async def bots() -> dict[str, object]:
 @app.get("/api/bots/market-making-lighter")
 async def market_making_state() -> dict[str, object]:
     return market_making_snapshot()
+
+
+@app.get("/api/bots/market-making-lighter/analytics")
+async def market_making_analysis(hours: int = 72) -> dict[str, object]:
+    return market_making_analytics.report(hours)
 
 
 @app.post("/api/bots/market-making-lighter/start")
