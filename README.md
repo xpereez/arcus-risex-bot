@@ -1,6 +1,6 @@
 # Arcus + RiseX Delta Neutral Bot
 
-Motor de ciclos delta neutral. Abre una posición maker en Arcus, cubre cada fill confirmado en RiseX y cierra las dos patas en sentido inverso. El motor conserva el control por ciclos, la persistencia SQLite y el dashboard del repositorio original, pero la pata de cobertura live usa RiseX.
+Motor de ciclos delta neutral. Abre una posición maker en Arcus, cubre cada fill confirmado en RiseX y cierra las dos patas en sentido inverso. Incluye control por ciclos, persistencia SQLite y un dashboard integrado.
 
 ## Estado actual
 
