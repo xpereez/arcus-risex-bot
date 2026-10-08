@@ -30,10 +30,10 @@ class EnginePhase(StrEnum):
     STOPPED = "STOPPED"
     IDLE = "IDLE"
     OPENING = "OPENING_ARCUS"
-    HEDGING_OPEN = "HEDGING_LIGHTER"
+    HEDGING_OPEN = "HEDGING_RISEX"
     HOLDING = "HOLDING"
     CLOSING = "CLOSING_ARCUS"
-    HEDGING_CLOSE = "CLOSING_LIGHTER"
+    HEDGING_CLOSE = "CLOSING_RISEX"
     COOLDOWN = "COOLDOWN"
     PAUSED = "PAUSED"
     ERROR = "ERROR"
@@ -95,9 +95,9 @@ class Cycle:
     opened_size: float = 0.0
     closed_size: float = 0.0
     arcus_open_price: float | None = None
-    lighter_open_price: float | None = None
+    risex_open_price: float | None = None
     arcus_close_price: float | None = None
-    lighter_close_price: float | None = None
+    risex_close_price: float | None = None
     realized_pnl: float = 0.0
     fees: float = 0.0
     started_at: datetime = field(default_factory=utc_now)
@@ -112,4 +112,3 @@ class Cycle:
             value = result[key]
             result[key] = value.isoformat() if value else None
         return result
-

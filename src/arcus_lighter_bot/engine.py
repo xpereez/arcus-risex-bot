@@ -18,14 +18,14 @@ from .venues.base import Venue
 class LegResult:
     filled_size: float
     arcus_average_price: float | None
-    lighter_average_price: float | None
+    risex_average_price: float | None
 
 
 class BotEngine:
-    def __init__(self, settings: Settings, arcus: Venue, lighter: Venue, storage: Storage) -> None:
+    def __init__(self, settings: Settings, arcus: Venue, risex: Venue, storage: Storage) -> None:
         self.settings = settings
         self.arcus = arcus
-        self.lighter = lighter
+        self.risex = risex
         self.storage = storage
         self.phase = EnginePhase.STOPPED
         self.current_cycle: Cycle | None = None
@@ -60,25 +60,25 @@ class BotEngine:
         await self.pause()
         if self._task and not self._task.done():
             await self._task
-        await asyncio.gather(self.arcus.close(), self.lighter.close())
+        await asyncio.gather(self.arcus.close(), self.risex.close())
 
     async def _run(self) -> None:
         try:
-            arcus_markets, lighter_markets = await asyncio.gather(
-                self.arcus.markets(), self.lighter.markets()
+            arcus_markets, risex_markets = await asyncio.gather(
+                self.arcus.markets(), self.risex.markets()
             )
             await self._preflight_flat_accounts()
             available = tuple(
                 symbol
                 for symbol in self.settings.markets
-                if symbol in arcus_markets and symbol in lighter_markets
+                if symbol in arcus_markets and symbol in risex_markets
             )
             if not available:
                 raise RuntimeError("No configured market is available on both venues")
             while self.accepting_cycles:
                 if self._session_pnl <= -self.settings.max_daily_loss_usd:
                     raise RuntimeError("Daily loss limit reached")
-                await self._execute_cycle(available, arcus_markets, lighter_markets)
+                await self._execute_cycle(available, arcus_markets, risex_markets)
                 if not self.accepting_cycles:
                     break
                 pause_minutes = self._rng.uniform(
@@ -96,15 +96,15 @@ class BotEngine:
             self.accepting_cycles = False
             self.storage.event("engine_error", str(exc), level="error")
 
-    async def _execute_cycle(self, symbols: tuple[str, ...], arcus_markets: dict, lighter_markets: dict) -> None:
+    async def _execute_cycle(self, symbols: tuple[str, ...], arcus_markets: dict, risex_markets: dict) -> None:
         symbol = self._rng.choice(symbols)
         side = self._rng.choice((Side.BUY, Side.SELL))
         notional = self._rng.uniform(self.settings.min_notional_usd, self.settings.max_notional_usd)
         bid, ask = await self.arcus.best_bid_ask(symbol)
         reference = (bid + ask) / 2
-        step = max(arcus_markets[symbol].step_size, lighter_markets[symbol].step_size)
+        step = max(arcus_markets[symbol].step_size, risex_markets[symbol].step_size)
         size = self._round_down(notional / reference, step)
-        minimum = max(arcus_markets[symbol].min_notional, lighter_markets[symbol].min_notional)
+        minimum = max(arcus_markets[symbol].min_notional, risex_markets[symbol].min_notional)
         if size <= 0 or size * reference < minimum:
             size = self._round_up(minimum / reference, step)
             notional = size * reference
@@ -120,11 +120,11 @@ class BotEngine:
         self.storage.save_cycle(cycle)
         self.storage.event(
             "cycle_started",
-            f"Apertura {symbol}: Arcus {side.value}, Lighter {side.opposite.value}",
+            f"Apertura {symbol}: Arcus {side.value}, RiseX {side.opposite.value}",
             {"cycle_id": cycle.id, "size": size, "notional_usd": notional},
         )
 
-        opening = await self._arcus_then_lighter(
+        opening = await self._arcus_then_risex(
             symbol=symbol,
             arcus_side=side,
             target_size=size,
@@ -133,7 +133,7 @@ class BotEngine:
         )
         cycle.opened_size = opening.filled_size
         cycle.arcus_open_price = opening.arcus_average_price
-        cycle.lighter_open_price = opening.lighter_average_price
+        cycle.risex_open_price = opening.risex_average_price
         if opening.filled_size <= step / 2:
             cycle.status = "CANCELED_NO_FILL"
             cycle.ended_at = utc_now()
@@ -152,13 +152,13 @@ class BotEngine:
 
         remaining = opening.filled_size
         arcus_close_value = 0.0
-        lighter_close_value = 0.0
+        risex_close_value = 0.0
         attempts = 0
         while remaining > step / 2:
             attempts += 1
             if attempts > 20:
                 raise RuntimeError(f"Unable to close {symbol} on Arcus after 20 maker attempts")
-            closing = await self._arcus_then_lighter(
+            closing = await self._arcus_then_risex(
                 symbol=symbol,
                 arcus_side=side.opposite,
                 target_size=remaining,
@@ -169,26 +169,26 @@ class BotEngine:
                 remaining = max(0.0, remaining - closing.filled_size)
                 cycle.closed_size += closing.filled_size
                 arcus_close_value += (closing.arcus_average_price or 0) * closing.filled_size
-                lighter_close_value += (closing.lighter_average_price or 0) * closing.filled_size
+                risex_close_value += (closing.risex_average_price or 0) * closing.filled_size
                 await self._assert_delta_neutral(symbol, step)
             if remaining > step / 2:
                 await asyncio.sleep(self.settings.scaled_seconds(3))
 
         cycle.arcus_close_price = arcus_close_value / cycle.closed_size
-        cycle.lighter_close_price = lighter_close_value / cycle.closed_size
+        cycle.risex_close_price = risex_close_value / cycle.closed_size
         arcus_sign = 1 if side is Side.BUY else -1
         cycle.realized_pnl = arcus_sign * cycle.closed_size * (
             (cycle.arcus_close_price - (cycle.arcus_open_price or cycle.arcus_close_price))
-            - (cycle.lighter_close_price - (cycle.lighter_open_price or cycle.lighter_close_price))
+            - (cycle.risex_close_price - (cycle.risex_open_price or cycle.risex_close_price))
         )
         cycle.status = "COMPLETED"
         cycle.ended_at = utc_now()
         self._cycles_completed += 1
         self._session_volume += cycle.closed_size * (
             (cycle.arcus_open_price or 0)
-            + (cycle.lighter_open_price or 0)
+            + (cycle.risex_open_price or 0)
             + (cycle.arcus_close_price or 0)
-            + (cycle.lighter_close_price or 0)
+            + (cycle.risex_close_price or 0)
         )
         self._session_pnl += cycle.realized_pnl - cycle.fees
         self.storage.save_cycle(cycle)
@@ -199,7 +199,7 @@ class BotEngine:
         )
         self.current_cycle = None
 
-    async def _arcus_then_lighter(
+    async def _arcus_then_risex(
         self,
         *,
         symbol: str,
@@ -220,7 +220,7 @@ class BotEngine:
             {"order_id": order.id, "size": target_size, "price": maker_price, "reduce_only": reduce_only},
         )
         hedged = 0.0
-        lighter_value = 0.0
+        risex_value = 0.0
         timeout = (
             max(self._paper_timeout_floor, self.settings.scaled_seconds(self.settings.order_timeout_seconds))
             if self.settings.mode == "paper"
@@ -236,7 +236,7 @@ class BotEngine:
                     EnginePhase.HEDGING_CLOSE if reduce_only else EnginePhase.HEDGING_OPEN
                 )
                 hedge = await asyncio.wait_for(
-                    self.lighter.place_market(
+                    self.risex.place_market(
                         symbol,
                         arcus_side.opposite,
                         delta,
@@ -246,12 +246,12 @@ class BotEngine:
                     timeout=self.settings.max_unhedged_seconds,
                 )
                 if hedge.status is not OrderStatus.FILLED or abs(hedge.filled_size - delta) > 1e-9:
-                    raise RuntimeError(f"Incomplete Lighter hedge for {symbol}: {hedge.filled_size}/{delta}")
+                    raise RuntimeError(f"Incomplete RiseX hedge for {symbol}: {hedge.filled_size}/{delta}")
                 hedged += delta
-                lighter_value += (hedge.average_fill_price or hedge.price) * delta
+                risex_value += (hedge.average_fill_price or hedge.price) * delta
                 self.storage.event(
                     "partial_hedge",
-                    f"Hedge Lighter {symbol}: {delta:.8f}",
+                    f"Hedge RiseX {symbol}: {delta:.8f}",
                     {"arcus_order_id": order.id, "cumulative_hedged": hedged, "reduce_only": reduce_only},
                 )
                 self._set_phase(phase)
@@ -266,7 +266,7 @@ class BotEngine:
             latest = await self.arcus.get_order(order.id, symbol)
             final_delta = latest.filled_size - hedged
             if final_delta > 1e-12:
-                hedge = await self.lighter.place_market(
+                hedge = await self.risex.place_market(
                     symbol,
                     arcus_side.opposite,
                     final_delta,
@@ -274,7 +274,7 @@ class BotEngine:
                     self.settings.max_slippage_bps,
                 )
                 hedged += hedge.filled_size
-                lighter_value += (hedge.average_fill_price or hedge.price) * hedge.filled_size
+                risex_value += (hedge.average_fill_price or hedge.price) * hedge.filled_size
             self.storage.event(
                 "arcus_timeout",
                 f"Orden Arcus cancelada tras timeout ({hedged:.8f}/{target_size:.8f})",
@@ -287,7 +287,7 @@ class BotEngine:
         return LegResult(
             filled_size=hedged,
             arcus_average_price=latest.average_fill_price or (maker_price if hedged else None),
-            lighter_average_price=lighter_value / hedged if hedged else None,
+            risex_average_price=risex_value / hedged if hedged else None,
         )
 
     async def _wait_phase(self, phase: EnginePhase, real_seconds: float) -> None:
@@ -302,12 +302,12 @@ class BotEngine:
         self.next_action_at = None
 
     async def _preflight_flat_accounts(self) -> None:
-        arcus_positions, lighter_positions = await asyncio.gather(
-            self.arcus.positions(), self.lighter.positions()
+        arcus_positions, risex_positions = await asyncio.gather(
+            self.arcus.positions(), self.risex.positions()
         )
         existing = [
             position
-            for position in [*arcus_positions, *lighter_positions]
+            for position in [*arcus_positions, *risex_positions]
             if abs(position.signed_size) > 1e-10
         ]
         if existing:
@@ -324,12 +324,12 @@ class BotEngine:
             self.settings.max_unhedged_seconds
         )
         while True:
-            arcus_positions, lighter_positions = await asyncio.gather(
-                self.arcus.positions(), self.lighter.positions()
+            arcus_positions, risex_positions = await asyncio.gather(
+                self.arcus.positions(), self.risex.positions()
             )
             residual = sum(
                 position.signed_size
-                for position in [*arcus_positions, *lighter_positions]
+                for position in [*arcus_positions, *risex_positions]
                 if position.symbol == symbol
             )
             if abs(residual) <= step / 2 + 1e-12:
@@ -345,13 +345,13 @@ class BotEngine:
         self._phase_started = utc_now()
 
     async def snapshot(self) -> dict[str, object]:
-        accounts, arcus_positions, lighter_positions = await asyncio.gather(
-            asyncio.gather(self.arcus.account(), self.lighter.account()),
+        accounts, arcus_positions, risex_positions = await asyncio.gather(
+            asyncio.gather(self.arcus.account(), self.risex.account()),
             self.arcus.positions(),
-            self.lighter.positions(),
+            self.risex.positions(),
         )
         tracked_accounts = [self._account_with_volume_tracking(account) for account in accounts]
-        all_positions = [*arcus_positions, *lighter_positions]
+        all_positions = [*arcus_positions, *risex_positions]
         net_delta: dict[str, float] = {}
         for position in all_positions:
             net_delta[position.symbol] = net_delta.get(position.symbol, 0.0) + position.signed_size

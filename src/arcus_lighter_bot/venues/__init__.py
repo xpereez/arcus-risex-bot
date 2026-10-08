@@ -1,7 +1,6 @@
 from .arcus import ArcusVenue
 from .base import Venue
-from .lighter import LighterVenue
+from .risex import RiseXVenue
 from .paper import PaperVenue
 
-__all__ = ["ArcusVenue", "LighterVenue", "PaperVenue", "Venue"]
-
+__all__ = ["ArcusVenue", "RiseXVenue", "PaperVenue", "Venue"]

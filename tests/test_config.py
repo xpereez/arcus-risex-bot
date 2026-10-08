@@ -21,7 +21,7 @@ def test_public_config_never_contains_secrets(monkeypatch):
     assert "secret" not in str(public)
 
 
-def test_robinhood_lighter_uses_its_chain_id(monkeypatch):
-    monkeypatch.delenv("LIGHTER_CHAIN_ID", raising=False)
-    monkeypatch.setenv("LIGHTER_API_URL", "https://api.rh.lighter.xyz")
-    assert Settings.from_env().lighter_chain_id == 466324
+def test_risex_defaults_to_mainnet(monkeypatch):
+    monkeypatch.delenv("RISEX_NETWORK", raising=False)
+    monkeypatch.delenv("RISEX_API_URL", raising=False)
+    assert Settings.from_env().risex_network == "mainnet"

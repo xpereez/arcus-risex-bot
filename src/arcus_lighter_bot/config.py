@@ -60,11 +60,10 @@ class Settings:
     arcus_account_index: int
     arcus_api_key: str
     arcus_api_private_key: str
-    lighter_api_url: str
-    lighter_chain_id: int
-    lighter_account_index: int | None
-    lighter_api_key_index: int
-    lighter_api_private_key: str
+    risex_api_url: str
+    risex_network: str
+    risex_account_address: str
+    risex_signer_private_key: str
     database_path: str
 
     @classmethod
@@ -77,9 +76,11 @@ class Settings:
         unknown = sorted(set(requested) - set(SUPPORTED_MARKETS))
         if unknown:
             raise ValueError(f"Unsupported markets: {', '.join(unknown)}")
-        account_raw = os.getenv("LIGHTER_ACCOUNT_INDEX", "").strip()
-        lighter_api_url = os.getenv("LIGHTER_API_URL", "https://api.rh.lighter.xyz").rstrip("/")
-        default_lighter_chain_id = 466324 if "api.rh.lighter.xyz" in lighter_api_url else 300
+        risex_network = os.getenv("RISEX_NETWORK", "mainnet").strip().lower()
+        risex_api_url = os.getenv(
+            "RISEX_API_URL",
+            "https://api.rise.trade" if risex_network == "mainnet" else "https://api.testnet.rise.trade",
+        ).rstrip("/")
         settings = cls(
             mode=os.getenv("BOT_MODE", "paper").strip().lower(),
             auto_start=_bool("BOT_AUTO_START", True),
@@ -103,11 +104,10 @@ class Settings:
             arcus_account_index=_int("ARCUS_ACCOUNT_INDEX", 0),
             arcus_api_key=os.getenv("ARCUS_API_KEY", "").strip(),
             arcus_api_private_key=os.getenv("ARCUS_API_PRIVATE_KEY", "").strip(),
-            lighter_api_url=lighter_api_url,
-            lighter_chain_id=_int("LIGHTER_CHAIN_ID", default_lighter_chain_id),
-            lighter_account_index=int(account_raw) if account_raw else None,
-            lighter_api_key_index=_int("LIGHTER_API_KEY_INDEX", 0),
-            lighter_api_private_key=os.getenv("LIGHTER_API_PRIVATE_KEY", "").strip(),
+            risex_api_url=risex_api_url,
+            risex_network=risex_network,
+            risex_account_address=os.getenv("RISEX_ACCOUNT_ADDRESS", "").strip(),
+            risex_signer_private_key=os.getenv("RISEX_SIGNER_PRIVATE_KEY", "").strip(),
             database_path=os.getenv("BOT_DATABASE_PATH", "data/bot.sqlite3"),
         )
         settings.validate()
@@ -116,6 +116,8 @@ class Settings:
     def validate(self) -> None:
         if self.mode not in {"paper", "live"}:
             raise ValueError("BOT_MODE must be paper or live")
+        if self.risex_network not in {"mainnet", "testnet"}:
+            raise ValueError("RISEX_NETWORK must be mainnet or testnet")
         if self.min_notional_usd <= 0 or self.max_notional_usd < self.min_notional_usd:
             raise ValueError("Invalid notional range")
         if self.hold_max_minutes < self.hold_min_minutes:
@@ -133,8 +135,8 @@ class Settings:
                     "ARCUS_ADDRESS": self.arcus_address,
                     "ARCUS_API_KEY": self.arcus_api_key,
                     "ARCUS_API_PRIVATE_KEY": self.arcus_api_private_key,
-                    "LIGHTER_ACCOUNT_INDEX": self.lighter_account_index,
-                    "LIGHTER_API_PRIVATE_KEY": self.lighter_api_private_key,
+                    "RISEX_ACCOUNT_ADDRESS": self.risex_account_address,
+                    "RISEX_SIGNER_PRIVATE_KEY": self.risex_signer_private_key,
                 }.items()
                 if value in {None, ""}
             ]

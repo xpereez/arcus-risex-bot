@@ -30,7 +30,7 @@ class PaperVenue(Venue):
         fill_plan: list[tuple[float, float]] | None = None,
     ) -> None:
         self.name = name
-        self._rng = random.Random(seed + (1 if name == "lighter" else 0))
+        self._rng = random.Random(seed + (1 if name == "risex" else 0))
         self._orders: dict[str, Order] = {}
         self._order_started: dict[str, float] = {}
         self._applied_fills: dict[str, float] = {}
